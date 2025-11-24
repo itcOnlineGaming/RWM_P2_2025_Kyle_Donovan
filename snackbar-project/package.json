@@ -1,0 +1,15 @@
+{
+  "name": "snackbar-project",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "demo"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=demo",
+    "build": "npm run build --workspace=packages/snackbar",
+    "package": "npm run package --workspace=packages/snackbar"
+  }
+}
