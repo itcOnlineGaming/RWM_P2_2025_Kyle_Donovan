@@ -1,13 +1,13 @@
-<script lang="ts">
+<script>
   import { snackbar } from '@srl/snackbar';
   import { onMount } from 'svelte';
   import './page.css';
 
   let customMessage = 'Meeting scheduled for 3:00 PM';
   let customDuration = 3000;
-  let selectedType: 'success' | 'error' | 'warning' | 'info' = 'info';
-  let selectedPosition: any = 'bottom-left';
-  let notificationPermission: NotificationPermission = 'default';
+  let selectedType = 'info';
+  let selectedPosition = 'bottom-left';
+  let notificationPermission = 'default';
   
   let desktopTitle = 'Meeting Reminder';
   let desktopBody = 'Team standup in 15 minutes';
@@ -33,7 +33,7 @@
     }
   }
 
-  function sendDesktopNotification(title: string, body: string, icon?: string) {
+  function sendDesktopNotification(title, body, icon) {
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification(title, {
         body: body,
@@ -73,13 +73,14 @@
   }
 
   function sendCustomDesktopNotification() {
-    sendDesktopNotification(desktopTitle, desktopBody);
+    sendDesktopNotification(desktopTitle, desktopBody, '📅');
   }
 
   function sendBothNotifications() {
     sendDesktopNotification(
       'Meeting Scheduled',
-      'Weekly team sync added to your calendar for tomorrow at 10 AM'
+      'Weekly team sync added to your calendar for tomorrow at 10 AM',
+      '📅'
     );
     
     snackbar.success('Meeting scheduled: Weekly team sync tomorrow at 10 AM');
@@ -108,7 +109,7 @@
   }
 
   function showAllPositions() {
-    const positions: any[] = [
+    const positions = [
       'top-left', 'top-center', 'top-right',
       'bottom-left', 'bottom-center', 'bottom-right'
     ];

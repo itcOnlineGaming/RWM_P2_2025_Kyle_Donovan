@@ -1,11 +1,25 @@
-<script lang="ts">
+<script>
   import { snackbar } from '@srl/snackbar';
+  import { 
+    notifyEventCreated, 
+    notifyEventCancelled, 
+    notifyEventReminder,
+    requestNotificationPermission 
+  } from '@srl/snackbar';
+  import { onMount } from 'svelte';
   import './calendar.css';
 
   // Get current date
   const today = new Date();
   let currentMonth = today.getMonth();
   let currentYear = today.getFullYear();
+
+  // Modal state
+  let showModal = false;
+  let newEventTitle = '';
+  let newEventDate = today.toISOString().split('T')[0];
+  let newEventTime = '14:00';
+  let newEventType = 'meeting';
 
   // Sample events
   let events = [
@@ -25,7 +39,13 @@
   $: calendar = generateCalendar(currentYear, currentMonth);
   $: monthYear = `${monthNames[currentMonth]} ${currentYear}`;
 
-  function generateCalendar(year: number, month: number) {
+  onMount(async () => {
+    // Request notification permission for mobile and desktop
+    const permission = await requestNotificationPermission();
+    console.log('Notification permission:', permission);
+  });
+
+  function generateCalendar(year, month) {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
@@ -83,18 +103,55 @@
     snackbar.info('Jumped to today');
   }
 
-  function addEvent(day: number) {
-    const date = new Date(currentYear, currentMonth, day, 14, 0);
-    const newEvent = {
-      date,
-      title: 'New Meeting',
-      type: 'meeting'
-    };
-    events = [...events, newEvent];
-    snackbar.success(`Event added for ${monthNames[currentMonth]} ${day}`);
+  function openNewEventModal(day) {
+    showModal = true;
+    if (day) {
+      const date = new Date(currentYear, currentMonth, day);
+      newEventDate = date.toISOString().split('T')[0];
+    } else {
+      newEventDate = today.toISOString().split('T')[0];
+    }
+    newEventTitle = '';
+    newEventTime = '14:00';
+    newEventType = 'meeting';
   }
 
-  function handleEventClick(event: any) {
+  function closeModal() {
+    showModal = false;
+  }
+
+  function createEvent() {
+    if (!newEventTitle.trim()) {
+      snackbar.error('Please enter an event title');
+      return;
+    }
+
+    const [hours, minutes] = newEventTime.split(':').map(Number);
+    const eventDate = new Date(newEventDate);
+    eventDate.setHours(hours, minutes);
+
+    const newEvent = {
+      date: eventDate,
+      title: newEventTitle,
+      type: newEventType
+    };
+
+    events = [...events, newEvent];
+    
+    // Use the calendar integration helper - sends both in-app and mobile/desktop notification
+    notifyEventCreated(newEvent, {
+      showDesktopNotification: true,
+      snackbarPosition: 'bottom-right'
+    });
+    
+    closeModal();
+  }
+
+  function addEvent(day) {
+    openNewEventModal(day);
+  }
+
+  function handleEventClick(event) {
     const timeStr = event.date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
     const dateStr = event.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     
@@ -104,30 +161,26 @@
     });
   }
 
-  function sendReminder(event: any) {
-    const timeStr = event.date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    
-    snackbar.warning(`Reminder: ${event.title} at ${timeStr}`, {
-      duration: 6000,
-      position: 'bottom-right'
+  function sendReminder(event) {
+    // Use the calendar integration helper - includes vibration on mobile
+    notifyEventReminder(event, 15, {
+      showDesktopNotification: true,
+      snackbarPosition: 'top-right'
     });
-
-    if (Notification.permission === 'granted') {
-      new Notification('Meeting Reminder', {
-        body: `${event.title} starts at ${timeStr}`,
-        icon: '📅'
-      });
-    }
   }
 
-  function deleteEvent(eventToDelete: any) {
+  function deleteEvent(eventToDelete) {
     events = events.filter(e => e !== eventToDelete);
-    snackbar.error('Event cancelled');
+    
+    // Use the calendar integration helper - includes vibration pattern on mobile
+    notifyEventCancelled(eventToDelete, {
+      showDesktopNotification: true
+    });
   }
 
-  let selectedDay: any = null;
+  let selectedDay = null;
 
-  function selectDay(day: any) {
+  function selectDay(day) {
     if (day.isCurrentMonth) {
       selectedDay = day;
     }
@@ -149,7 +202,7 @@
         <span>📅</span>
         Today
       </button>
-      <button class="btn btn-primary" on:click={() => addEvent(today.getDate())}>
+      <button class="btn btn-primary" on:click={() => openNewEventModal()}>
         <span>➕</span>
         New Event
       </button>
@@ -230,13 +283,13 @@
                   </div>
                 </div>
                 <div class="event-actions">
-                  <button class="event-btn" on:click={() => handleEventClick(event)}>
+                  <button class="event-btn" on:click={() => handleEventClick(event)} title="View details">
                     <span>ℹ️</span>
                   </button>
-                  <button class="event-btn" on:click={() => sendReminder(event)}>
+                  <button class="event-btn" on:click={() => sendReminder(event)} title="Send reminder (vibrates on mobile)">
                     <span>🔔</span>
                   </button>
-                  <button class="event-btn danger" on:click={() => deleteEvent(event)}>
+                  <button class="event-btn danger" on:click={() => deleteEvent(event)} title="Delete event">
                     <span>🗑️</span>
                   </button>
                 </div>
@@ -294,3 +347,68 @@
     </div>
   </div>
 </div>
+
+<!-- New Event Modal -->
+{#if showModal}
+  <div class="modal-overlay" on:click={closeModal}>
+    <div class="modal" on:click|stopPropagation>
+      <div class="modal-header">
+        <h2 class="modal-title">Create New Event</h2>
+        <button class="modal-close" on:click={closeModal}>✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-field">
+          <label for="event-title">Event Title</label>
+          <input 
+            id="event-title"
+            type="text" 
+            bind:value={newEventTitle}
+            placeholder="e.g., Team Meeting"
+            autofocus
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="event-date">Date</label>
+            <input 
+              id="event-date"
+              type="date" 
+              bind:value={newEventDate}
+            />
+          </div>
+
+          <div class="form-field">
+            <label for="event-time">Time</label>
+            <input 
+              id="event-time"
+              type="time" 
+              bind:value={newEventTime}
+            />
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="event-type">Event Type</label>
+          <select id="event-type" bind:value={newEventType}>
+            <option value="meeting">📝 Meeting</option>
+            <option value="call">📞 Call</option>
+            <option value="review">👁️ Review</option>
+            <option value="demo">🎯 Demo</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" on:click={closeModal}>
+          Cancel
+        </button>
+        <button class="btn btn-primary" on:click={createEvent}>
+          <span>➕</span>
+          Create Event
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
