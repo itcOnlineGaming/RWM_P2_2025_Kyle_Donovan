@@ -1,4 +1,6 @@
 <script>
+  import { base } from '$app/paths';
+	import { goto } from '$app/navigation';
   import { SnackbarContainer } from '$lib/snackbar/index';
   import { page } from '$app/stores';
 </script>
@@ -14,17 +16,13 @@
     </div>
 
     <nav class="nav-menu">
-      <a href="/" class="nav-item" class:active={$page.url.pathname === '/'}>
+      <a href="{base}/" class="nav-item" class:active={$page.url.pathname === base + '/'}>
         <span class="nav-icon">🔔</span>
         <span class="nav-label">Notifications</span>
       </a>
-      <a href="/calendar" class="nav-item" class:active={$page.url.pathname === '/calendar'}>
+      <a href="{base}/calendar" class="nav-item" class:active={$page.url.pathname === base + '/calendar'}>
         <span class="nav-icon">📆</span>
         <span class="nav-label">Calendar</span>
-      </a>
-      <a href="#settings" class="nav-item">
-        <span class="nav-icon">⚙️</span>
-        <span class="nav-label">Settings</span>
       </a>
     </nav>
 

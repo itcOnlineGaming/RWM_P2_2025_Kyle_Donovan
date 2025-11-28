@@ -11,5 +11,8 @@
     "dev": "npm run dev --workspace=demo",
     "build": "npm run build --workspace=packages/snackbar",
     "package": "npm run package --workspace=packages/snackbar"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-static": "^3.0.10"
   }
 }

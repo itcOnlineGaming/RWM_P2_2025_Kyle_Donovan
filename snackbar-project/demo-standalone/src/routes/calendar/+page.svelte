@@ -1,4 +1,6 @@
 <script>
+  import { base } from '$app/paths';
+  import { goto } from '$app/navigation';
   import { snackbar } from '$lib/snackbar/index';
   import { 
     notifyEventCreated, 

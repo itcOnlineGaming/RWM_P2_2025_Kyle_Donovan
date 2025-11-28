@@ -1,9 +1,10 @@
 <script>
+  import { onMount } from 'svelte';
   let permissionStatus = 'checking...';
   let testResult = '';
 
   async function checkPermission() {
-    if (!('Notification' in window)) {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
       permissionStatus = '❌ Not supported';
       return;
     }
@@ -11,12 +12,14 @@
   }
 
   async function requestPermission() {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
     const result = await Notification.requestPermission();
     permissionStatus = result;
     testResult = `Permission: ${result}`;
   }
 
   async function sendTest() {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
     if (Notification.permission === 'granted') {
       new Notification('Test Notification', {
         body: 'If you see this, notifications work!',
@@ -28,7 +31,9 @@
     }
   }
 
-  checkPermission();
+  onMount(() => {
+    checkPermission();
+  });
 </script>
 
 <div style="padding: 20px; max-width: 600px; margin: 0 auto;">
