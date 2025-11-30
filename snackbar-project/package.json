@@ -1,22 +1,27 @@
 {
-  "name": "@rwm-p2-2025-kyle-donovan/snackbar",
-  "version": "1.0.0",
-  "private": false,
+  "name": "snackbar-project",
+  "version": "1.0.9",
   "type": "module",
   "exports": {
     ".": {
-      "svelte": "./demo-standalone/src/lib/snackbar/index.ts"
+      "import": "./dist/src/index.js",
+      "require": "./dist/src/index.js",
+      "types": "./dist/src/index.d.ts"
     }
   },
   "files": [
-    "demo-standalone/src/lib/snackbar"
+    "demo-standalone/src/lib/snackbar",
+    "dist"
   ],
   "workspaces": [
     "demo-standalone"
   ],
   "scripts": {
     "dev": "npm run dev --workspace=demo-standalone",
-    "build": "npm run build --workspace=demo-standalone",
+    "build": "tsc -p tsconfig.build.json",
     "preview": "npm run preview --workspace=demo-standalone"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
   }
 }
