@@ -1,13 +1,13 @@
 {
   "name": "snackbar-project",
-  "version": "1.0.9",
+  "version": "1.0.11",
   "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/src/index.js",
-      "require": "./dist/src/index.js",
-      "types": "./dist/src/index.d.ts"
-    }
+      "import": "./demo-standalone/src/lib/snackbar/index.ts",
+      "types": "./demo-standalone/src/lib/snackbar/index.ts"
+    },
+    "./demo-standalone/src/lib/snackbar/SnackbarContainer.svelte": "./demo-standalone/src/lib/snackbar/SnackbarContainer.svelte"
   },
   "files": [
     "demo-standalone/src/lib/snackbar",
