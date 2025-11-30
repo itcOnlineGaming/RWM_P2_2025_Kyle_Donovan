@@ -164,3 +164,57 @@ function getEventIcon(type?: string): string {
     default: return '📅';
   }
 }
+
+/**
+ * Check if an event is coming up within a specified number of minutes
+ * Returns the number of minutes until the event (or 0 if already started)
+ */
+export function getMinutesUntilEvent(event: CalendarEvent): number {
+  const now = new Date();
+  const timeUntilEvent = event.date.getTime() - now.getTime();
+  const minutesUntil = Math.floor(timeUntilEvent / (1000 * 60));
+  return Math.max(0, minutesUntil);
+}
+
+/**
+ * Check if an event is within the specified time window
+ */
+export function isEventWithinWindow(event: CalendarEvent, minutesWindow: number = 60): boolean {
+  const minutesUntil = getMinutesUntilEvent(event);
+  return minutesUntil > 0 && minutesUntil <= minutesWindow;
+}
+
+/**
+ * Filter events that are coming up within a time window
+ */
+export function getUpcomingEvents(events: CalendarEvent[], minutesWindow: number = 60): CalendarEvent[] {
+  return events.filter(event => isEventWithinWindow(event, minutesWindow));
+}
+
+/**
+ * Helper to automatically notify about upcoming events
+ * Use this in a setInterval to periodically check for events within an hour
+ */
+export function checkAndNotifyUpcomingEvents(
+  events: CalendarEvent[],
+  notifiedEventIds: Set<string>,
+  minutesThreshold: number = 60,
+  minutesToNotify: number = 15
+): void {
+  const upcomingEvents = getUpcomingEvents(events, minutesThreshold);
+
+  upcomingEvents.forEach(event => {
+    const eventId = `${event.title}-${event.date.getTime()}`;
+
+    if (!notifiedEventIds.has(eventId)) {
+      const minutesUntil = getMinutesUntilEvent(event);
+
+      if (minutesUntil <= minutesToNotify && minutesUntil > 0) {
+        notifyEventReminder(event, minutesUntil, {
+          showDesktopNotification: true
+        });
+        notifiedEventIds.add(eventId);
+      }
+    }
+  });
+}

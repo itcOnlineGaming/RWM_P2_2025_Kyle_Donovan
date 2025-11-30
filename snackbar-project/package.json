@@ -1,8 +1,16 @@
 {
-  "name": "snackbar-project",
+  "name": "@rwm-p2-2025-kyle-donovan/snackbar",
   "version": "1.0.0",
-  "private": true,
+  "private": false,
   "type": "module",
+  "exports": {
+    ".": {
+      "svelte": "./demo-standalone/src/lib/snackbar/index.ts"
+    }
+  },
+  "files": [
+    "demo-standalone/src/lib/snackbar"
+  ],
   "workspaces": [
     "demo-standalone"
   ],

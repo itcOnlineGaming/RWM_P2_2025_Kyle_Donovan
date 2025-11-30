@@ -24,7 +24,11 @@ export {
   notifyEventUpdated,
   notifyEventCancelled,
   notifyEventReminder,
-  notifyCalendarSynced
+  notifyCalendarSynced,
+  getMinutesUntilEvent,
+  isEventWithinWindow,
+  getUpcomingEvents,
+  checkAndNotifyUpcomingEvents
 } from './calendarIntegration';
 
 export type { CalendarEvent } from './calendarIntegration';

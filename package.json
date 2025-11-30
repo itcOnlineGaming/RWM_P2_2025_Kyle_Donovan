@@ -1,0 +1,28 @@
+{
+  "name": "@rwm-p2-2025-kyle-donovan/snackbar",
+  "version": "1.0.0",
+  "private": false,
+  "type": "module",
+  "description": "Snackbar notification library (packaged) - export for SvelteKit",
+  "exports": {
+    ".": {
+      "svelte": "./demo-standalone/src/lib/snackbar/index.ts",
+      "import": "./demo-standalone/src/lib/snackbar/index.ts"
+    }
+  },
+  "files": [
+    "demo-standalone/src/lib/snackbar",
+    "demo-standalone/static/sw.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/itcOnlineGaming/RWM_P2_2025_Kyle_Donovan.git"
+  },
+  "keywords": ["svelte", "snackbar", "notifications"],
+  "author": "Kyle Donovan",
+  "license": "MIT",
+  "scripts": {
+    "test": "echo \"No tests\"",
+    "build": "echo \"This package is provided as source; build in consumer project.\""
+  }
+}
