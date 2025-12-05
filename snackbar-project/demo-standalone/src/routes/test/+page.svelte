@@ -31,8 +31,29 @@
     }
   }
 
+  async function subscribeUser() {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: 'BB0mh7LqN9ykwQ6JehCD58ogN9Lphh3LVJ7QaFm6iUZJh5Hr_FfXt9ey4OOyU-BuJblIu2v2ycVShK7WSoy46vE'
+      });
+      await fetch('http://localhost:3000/subscribe', {
+        method: 'POST',
+        body: JSON.stringify(subscription),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      testResult = '✅ Subscribed to push notifications!';
+    } else {
+      testResult = '❌ Push messaging not supported.';
+    }
+  }
+
   onMount(() => {
     checkPermission();
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
   });
 </script>
 
@@ -48,6 +69,16 @@
     
     <button on:click={sendTest} style="padding: 15px; font-size: 16px;">
       Send Test Notification
+    </button>
+    
+    <button on:click={subscribeUser} style="padding: 15px; font-size: 16px;">
+      Subscribe to Push Notifications
+    </button>
+    <button on:click={async () => {
+      await fetch('http://localhost:3000/notify', { method: 'POST' });
+      testResult = 'Notification triggered from server!';
+    }} style="padding: 15px; font-size: 16px;">
+      Trigger Server Notification
     </button>
   </div>
   
