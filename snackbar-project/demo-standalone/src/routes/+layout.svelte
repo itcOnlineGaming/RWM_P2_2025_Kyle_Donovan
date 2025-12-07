@@ -24,6 +24,10 @@
         <span class="nav-icon">📆</span>
         <span class="nav-label">Calendar</span>
       </a>
+      <a href="{base}/stories" class="nav-item" class:active={$page.url.pathname === base + '/stories'}>
+        <span class="nav-icon">📚</span>
+        <span class="nav-label">Stories</span>
+      </a>
     </nav>
 
     <div class="sidebar-footer">

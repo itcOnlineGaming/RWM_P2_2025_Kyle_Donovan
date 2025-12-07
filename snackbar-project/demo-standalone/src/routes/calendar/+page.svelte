@@ -142,21 +142,18 @@
     const newEvent = {
       date: eventDate,
       title: newEventTitle,
-      type: newEventType
+      type: newEventType,
+      description: `${newEventType.charAt(0).toUpperCase() + newEventType.slice(1)} scheduled`
     };
 
     events = [...events, newEvent];
     
-    console.log('Creating event:', newEvent);
-    console.log('Notification permission:', Notification.permission);
-    
     // Use the calendar integration helper - sends both in-app and mobile/desktop notification
     notifyEventCreated(newEvent, {
       showDesktopNotification: true,
-      snackbarPosition: 'bottom-right'
+      snackbarPosition: 'bottom-right',
+      snackbarDuration: 4000
     });
-    
-    console.log('Notification sent (check if it appeared)');
     
     closeModal();
   }
@@ -188,7 +185,9 @@
     
     // Use the calendar integration helper - includes vibration pattern on mobile
     notifyEventCancelled(eventToDelete, {
-      showDesktopNotification: true
+      showDesktopNotification: true,
+      snackbarPosition: 'top-right',
+      snackbarDuration: 4000
     });
   }
 

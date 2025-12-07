@@ -17,6 +17,7 @@
     getUpcomingEvents,
     type CalendarEvent
   } from '$lib/snackbar';
+  import './calendar-integration-example.css';
 
   let events: CalendarEvent[] = [];
   let eventTitle = '';
@@ -94,20 +95,30 @@
   <!-- Create Event Form -->
   <div class="create-event-section">
     <h2>Create Event</h2>
-    <div class="form-group">
-      <input
-        type="text"
-        placeholder="Event title"
-        bind:value={eventTitle}
-        on:keydown={(e) => e.key === 'Enter' && createEvent()}
-      />
-      <input
-        type="datetime-local"
-        bind:value={eventDateTime}
-      />
-      <button on:click={createEvent}>
-        Create Event
-      </button>
+    <div class="form-card">
+      <form on:submit|preventDefault={createEvent}>
+        <div class="form-group">
+          <label for="title">Event Title</label>
+          <input
+            id="title"
+            type="text"
+            placeholder="Enter event title"
+            bind:value={eventTitle}
+            on:keydown={(e) => e.key === 'Enter' && createEvent()}
+          />
+        </div>
+        <div class="form-group">
+          <label for="datetime">Date & Time</label>
+          <input
+            id="datetime"
+            type="datetime-local"
+            bind:value={eventDateTime}
+          />
+        </div>
+        <button class="primary-btn" type="submit">
+          Create Event
+        </button>
+      </form>
     </div>
   </div>
 
@@ -312,10 +323,4 @@
     font-size: 14px;
   }
 
-  .event-description {
-    margin: 8px 0 0 0;
-    color: #999;
-    font-size: 13px;
-    font-style: italic;
-  }
-</style>
+
