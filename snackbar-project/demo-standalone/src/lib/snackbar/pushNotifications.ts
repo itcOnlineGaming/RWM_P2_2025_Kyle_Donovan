@@ -61,8 +61,6 @@ export async function subscribeToPushNotifications(): Promise<boolean> {
       return true;
     } else {
       console.error('Server response status:', response.status, response.statusText);
-      return false;
-    }
       console.error('Failed to subscribe on server');
       return false;
     }

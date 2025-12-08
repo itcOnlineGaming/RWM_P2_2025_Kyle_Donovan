@@ -28,30 +28,62 @@
 
   // Modal state
   let showModal = false;
+  let isEditMode = false;
+  let editingEventId = null;
   let newEventTitle = '';
   let newEventDate = today.toISOString().split('T')[0];
   let newEventTime = '14:00';
   let newEventType = 'meeting';
 
-  // Sample events
-  let events = [
-    { date: new Date(2024, 10, 22, 10, 0), title: 'Team Standup', type: 'meeting' },
-    { date: new Date(2024, 10, 22, 14, 0), title: 'Project Review', type: 'review' },
-    { date: new Date(2024, 10, 23, 9, 0), title: 'Client Call', type: 'call' },
-    { date: new Date(2024, 10, 25, 15, 30), title: 'Code Review', type: 'review' },
-    { date: new Date(2024, 10, 26, 11, 0), title: 'Sprint Planning', type: 'meeting' },
-    { date: new Date(2024, 10, 27, 13, 0), title: 'Demo Day', type: 'demo' },
-  ];
+  // Events array - will be loaded from localStorage
+  let events = [];
+
+  // Generate unique ID for events
+  function generateEventId() {
+    return `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  // Load events from localStorage
+  function loadEvents() {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('calendar_events');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          // Convert date strings back to Date objects
+          events = parsed.map(e => ({
+            ...e,
+            date: new Date(e.date)
+          }));
+          console.log('📅 Loaded', events.length, 'events from storage');
+        } catch (e) {
+          console.error('Failed to load events:', e);
+          events = [];
+        }
+      }
+    }
+  }
+
+  // Save events to localStorage
+  function saveEvents() {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('calendar_events', JSON.stringify(events));
+      console.log('💾 Saved', events.length, 'events to storage');
+    }
+  }
 
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
   
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  $: calendar = generateCalendar(currentYear, currentMonth);
+  $: calendar = generateCalendar(currentYear, currentMonth, events);
   $: monthYear = `${monthNames[currentMonth]} ${currentYear}`;
 
   onMount(async () => {
+    // Load saved events first
+    loadEvents();
+    
     // Setup mobile notifications with service worker
     const { permission, registration } = await setupMobileNotifications();
     console.log('Notification permission:', permission);
@@ -84,7 +116,7 @@
     }
   }
 
-  function generateCalendar(year, month) {
+  function generateCalendar(year, month, eventsList) {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
@@ -100,7 +132,7 @@
     // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
-      const dayEvents = events.filter(e => 
+      const dayEvents = eventsList.filter(e => 
         e.date.getDate() === day && 
         e.date.getMonth() === month && 
         e.date.getFullYear() === year
@@ -143,6 +175,8 @@
   }
 
   function openNewEventModal(day) {
+    isEditMode = false;
+    editingEventId = null;
     showModal = true;
     if (day) {
       const date = new Date(currentYear, currentMonth, day);
@@ -153,6 +187,18 @@
     newEventTitle = '';
     newEventTime = '14:00';
     newEventType = 'meeting';
+  }
+
+  function openEditEventModal(event) {
+    isEditMode = true;
+    editingEventId = event.id;
+    showModal = true;
+    newEventTitle = event.title;
+    newEventDate = event.date.toISOString().split('T')[0];
+    const hours = event.date.getHours().toString().padStart(2, '0');
+    const minutes = event.date.getMinutes().toString().padStart(2, '0');
+    newEventTime = `${hours}:${minutes}`;
+    newEventType = event.type;
   }
 
   function closeModal() {
@@ -169,21 +215,46 @@
     const eventDate = new Date(newEventDate);
     eventDate.setHours(hours, minutes);
 
-    const newEvent = {
-      date: eventDate,
-      title: newEventTitle,
-      type: newEventType,
-      description: `${newEventType.charAt(0).toUpperCase() + newEventType.slice(1)} scheduled`
-    };
+    if (isEditMode && editingEventId) {
+      // Update existing event
+      events = events.map(e => {
+        if (e.id === editingEventId) {
+          return {
+            ...e,
+            date: eventDate,
+            title: newEventTitle,
+            type: newEventType,
+            description: `${newEventType.charAt(0).toUpperCase() + newEventType.slice(1)} scheduled`
+          };
+        }
+        return e;
+      });
+      
+      saveEvents();
+      snackbar.success(`Event "${newEventTitle}" updated successfully`, {
+        duration: 3000,
+        position: 'bottom-right'
+      });
+    } else {
+      // Create new event
+      const newEvent = {
+        id: generateEventId(),
+        date: eventDate,
+        title: newEventTitle,
+        type: newEventType,
+        description: `${newEventType.charAt(0).toUpperCase() + newEventType.slice(1)} scheduled`
+      };
 
-    events = [...events, newEvent];
-    
-    // Use the calendar integration helper - sends both in-app and mobile/desktop notification
-    notifyEventCreated(newEvent, {
-      showDesktopNotification: true,
-      snackbarPosition: 'bottom-right',
-      snackbarDuration: 4000
-    });
+      events = [...events, newEvent];
+      saveEvents();
+      
+      // Use the calendar integration helper - sends both in-app and mobile/desktop notification
+      notifyEventCreated(newEvent, {
+        showDesktopNotification: true,
+        snackbarPosition: 'bottom-right',
+        snackbarDuration: 4000
+      });
+    }
     
     closeModal();
   }
@@ -193,13 +264,8 @@
   }
 
   function handleEventClick(event) {
-    const timeStr = event.date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    const dateStr = event.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    
-    snackbar.info(`${event.title} - ${dateStr} at ${timeStr}`, {
-      duration: 5000,
-      position: 'top-right'
-    });
+    // Open edit modal when clicking on an event
+    openEditEventModal(event);
   }
 
   async function sendReminder(event) {
@@ -224,7 +290,9 @@
   }
 
   function deleteEvent(eventToDelete) {
-    events = events.filter(e => e !== eventToDelete);
+    const eventTitle = eventToDelete.title;
+    events = events.filter(e => e.id !== eventToDelete.id);
+    saveEvents();
     
     // Use the calendar integration helper - includes vibration pattern on mobile
     notifyEventCancelled(eventToDelete, {
@@ -232,6 +300,11 @@
       snackbarPosition: 'top-right',
       snackbarDuration: 4000
     });
+    
+    // Close modal if we're deleting the event being edited
+    if (showModal && isEditMode && editingEventId === eventToDelete.id) {
+      closeModal();
+    }
   }
 
   let selectedDay = null;
@@ -308,12 +381,21 @@
             {#if day.isCurrentMonth}
               <div class="day-number">{day.day}</div>
               {#if day.events.length > 0}
-                <div class="event-dots">
-                  {#each day.events.slice(0, 3) as event}
-                    <div class="event-dot {event.type}" title={event.title}></div>
+                <div class="day-events-inline">
+                  {#each day.events.slice(0, 2) as event}
+                    <div class="event-tag {event.type}" on:click|stopPropagation={() => handleEventClick(event)} title="{event.title} - Click to edit">
+                      <span class="event-tag-icon">
+                        {#if event.type === 'meeting'}📝
+                        {:else if event.type === 'call'}📞
+                        {:else if event.type === 'review'}👁️
+                        {:else}🎯
+                        {/if}
+                      </span>
+                      <span class="event-tag-title">{event.title}</span>
+                    </div>
                   {/each}
-                  {#if day.events.length > 3}
-                    <div class="event-more">+{day.events.length - 3}</div>
+                  {#if day.events.length > 2}
+                    <div class="event-more-tag">+{day.events.length - 2} more</div>
                   {/if}
                 </div>
               {/if}
@@ -353,8 +435,8 @@
                   </div>
                 </div>
                 <div class="event-actions">
-                  <button class="event-btn" on:click={() => handleEventClick(event)} title="View details">
-                    <span>ℹ️</span>
+                  <button class="event-btn" on:click={() => handleEventClick(event)} title="Edit event">
+                    <span>✏️</span>
                   </button>
                   <button class="event-btn" on:click={() => sendReminder(event)} title="Send reminder (vibrates on mobile)">
                     <span>🔔</span>
@@ -426,12 +508,12 @@
   </div>
 </div>
 
-<!-- New Event Modal -->
+<!-- Event Modal (Create/Edit) -->
 {#if showModal}
   <div class="modal-overlay" on:click={closeModal}>
     <div class="modal" on:click|stopPropagation>
       <div class="modal-header">
-        <h2 class="modal-title">Create New Event</h2>
+        <h2 class="modal-title">{isEditMode ? 'Edit Event' : 'Create New Event'}</h2>
         <button class="modal-close" on:click={closeModal}>✕</button>
       </div>
 
@@ -479,12 +561,21 @@
       </div>
 
       <div class="modal-footer">
+        {#if isEditMode}
+          <button class="btn btn-danger" on:click={() => {
+            const eventToDelete = events.find(e => e.id === editingEventId);
+            if (eventToDelete) deleteEvent(eventToDelete);
+          }}>
+            <span>🗑️</span>
+            Delete
+          </button>
+        {/if}
         <button class="btn btn-secondary" on:click={closeModal}>
           Cancel
         </button>
         <button class="btn btn-primary" on:click={createEvent}>
-          <span>➕</span>
-          Create Event
+          <span>{isEditMode ? '💾' : '➕'}</span>
+          {isEditMode ? 'Save Changes' : 'Create Event'}
         </button>
       </div>
     </div>

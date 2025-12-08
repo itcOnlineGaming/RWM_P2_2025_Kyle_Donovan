@@ -30,6 +30,14 @@
       </a>
     </nav>
 
+    <div class="demo-section">
+      <div class="demo-title">Demo Pages</div>
+      <a href="{base}/test" class="demo-link" class:active={$page.url.pathname === base + '/test'}>
+        <span class="demo-icon">🧪</span>
+        <span class="demo-label">Test Page</span>
+      </a>
+    </div>
+
     <div class="sidebar-footer">
       <div class="user-info">
         <div class="user-avatar">KD</div>
@@ -131,6 +139,55 @@
 
   .nav-label {
     font-size: 14px;
+  }
+
+  .demo-section {
+    padding: 16px 12px;
+    margin: 20px 16px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .demo-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 8px;
+    padding: 0 8px;
+  }
+
+  .demo-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    color: rgba(255,255,255,0.9);
+    text-decoration: none;
+    transition: all 0.2s;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .demo-link:hover {
+    background: rgba(255,255,255,0.15);
+    color: white;
+  }
+
+  .demo-link.active {
+    background: rgba(255,255,255,0.2);
+    color: white;
+  }
+
+  .demo-icon {
+    font-size: 16px;
+  }
+
+  .demo-label {
+    font-size: 13px;
   }
 
   .sidebar-footer {
