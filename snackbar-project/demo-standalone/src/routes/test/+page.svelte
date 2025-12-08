@@ -1,4 +1,5 @@
 <script>
+  import { base } from '$app/paths';
   import { onMount } from 'svelte';
   let permissionStatus = 'checking...';
   let testResult = '';
@@ -52,7 +53,10 @@
   onMount(() => {
     checkPermission();
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js');
+      const resolvedBase = (base || '/').replace(/\/$/, '');
+      const scope = (resolvedBase ? `${resolvedBase}/` : '/').replace(/\/+$/, '/');
+      const swPath = `${resolvedBase}/sw.js`.replace('//', '/');
+      navigator.serviceWorker.register(swPath, { scope });
     }
   });
 </script>

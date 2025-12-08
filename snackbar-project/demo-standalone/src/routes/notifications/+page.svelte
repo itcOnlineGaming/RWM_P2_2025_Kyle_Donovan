@@ -64,6 +64,29 @@
       snackbar.error('Please grant notification permission first');
     }
   }
+
+  async function triggerServerNotification() {
+    loading = true;
+    try {
+      const response = await fetch('http://localhost:3000/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (response.ok) {
+        snackbar.success('Push notification sent from server! 🚀', {
+          duration: 4000,
+          position: 'top-center'
+        });
+      } else {
+        snackbar.error('Failed to send notification from server');
+      }
+    } catch (error) {
+      snackbar.error(`Error: ${error.message}`);
+    } finally {
+      loading = false;
+    }
+  }
 </script>
 
 <div style="max-width: 800px; margin: 0 auto; padding: 40px 20px;">
@@ -146,13 +169,22 @@
         <div style="flex: 1;">
           <h3 style="margin: 0 0 8px 0; font-size: 16px;">Test Your Notifications</h3>
           <p style="margin: 0 0 12px 0; color: #666; font-size: 14px;">Send a test notification to verify everything works</p>
-          <button 
-            on:click={testNotification}
-            disabled={notificationPermission !== 'granted'}
-            style="padding: 10px 20px; background: #2196f3; color: white; border: none; border-radius: 6px; cursor: {notificationPermission !== 'granted' ? 'not-allowed' : 'pointer'}; font-size: 14px; font-weight: 600;"
-          >
-            Send Test Notification
-          </button>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button 
+              on:click={testNotification}
+              disabled={notificationPermission !== 'granted'}
+              style="padding: 10px 20px; background: #2196f3; color: white; border: none; border-radius: 6px; cursor: {notificationPermission !== 'granted' ? 'not-allowed' : 'pointer'}; font-size: 14px; font-weight: 600;"
+            >
+              Send Test Notification
+            </button>
+            <button 
+              on:click={triggerServerNotification}
+              disabled={loading || notificationPermission !== 'granted' || !pushEnabled}
+              style="padding: 10px 20px; background: #ff9800; color: white; border: none; border-radius: 6px; cursor: {loading || notificationPermission !== 'granted' || !pushEnabled ? 'not-allowed' : 'pointer'}; font-size: 14px; font-weight: 600;"
+            >
+              {loading ? '⏳ Sending...' : 'Trigger from Server'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,8 @@
 /**
  * Register service worker for mobile notifications
  */
+import { base as appBase } from '$app/paths';
+
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
   if (!('serviceWorker' in navigator)) {
     console.warn('Service Workers not supported');
@@ -8,8 +10,14 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
   }
 
   try {
-    const registration = await navigator.serviceWorker.register('/sw.js', {
-      scope: '/'
+    const resolvedBase = (appBase || '/').replace(/\/$/, '');
+    // Scope must be at or below the sw.js location; ensure trailing slash
+    const scope = (resolvedBase ? `${resolvedBase}/` : '/').replace(/\/+$/, '/');
+    const swPath = `${resolvedBase}/sw.js`.replace('//', '/');
+    console.log('Registering service worker', { base: resolvedBase || '/', swPath, scope });
+
+    const registration = await navigator.serviceWorker.register(swPath, {
+      scope
     });
     console.log('Service Worker registered:', registration);
     return registration;

@@ -376,14 +376,24 @@
             class:today={day.isToday}
             class:has-events={day.events.length > 0}
             class:selected={selectedDay === day}
+            role="button"
+            tabindex="0"
             on:click={() => selectDay(day)}
+            on:keydown={(event) => (event.key === 'Enter' || event.key === ' ') && selectDay(day)}
           >
             {#if day.isCurrentMonth}
               <div class="day-number">{day.day}</div>
               {#if day.events.length > 0}
                 <div class="day-events-inline">
                   {#each day.events.slice(0, 2) as event}
-                    <div class="event-tag {event.type}" on:click|stopPropagation={() => handleEventClick(event)} title="{event.title} - Click to edit">
+                    <div
+                      class="event-tag {event.type}"
+                      role="button"
+                      tabindex="0"
+                      on:click|stopPropagation={() => handleEventClick(event)}
+                      on:keydown|stopPropagation={(e) => (e.key === 'Enter' || e.key === ' ') && handleEventClick(event)}
+                      title="{event.title} - Click to edit"
+                    >
                       <span class="event-tag-icon">
                         {#if event.type === 'meeting'}📝
                         {:else if event.type === 'call'}📞
@@ -510,8 +520,15 @@
 
 <!-- Event Modal (Create/Edit) -->
 {#if showModal}
-  <div class="modal-overlay" on:click={closeModal}>
-    <div class="modal" on:click|stopPropagation>
+  <div
+    class="modal-overlay"
+    role="button"
+    tabindex="0"
+    aria-label="Close modal"
+    on:click|self={closeModal}
+    on:keydown={(e) => e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ') && closeModal()}
+  >
+    <div class="modal" role="dialog" aria-modal="true">
       <div class="modal-header">
         <h2 class="modal-title">{isEditMode ? 'Edit Event' : 'Create New Event'}</h2>
         <button class="modal-close" on:click={closeModal}>✕</button>
@@ -525,7 +542,6 @@
             type="text" 
             bind:value={newEventTitle}
             placeholder="e.g., Team Meeting"
-            autofocus
           />
         </div>
 

@@ -26,6 +26,8 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 /**
  * Subscribe to push notifications
  */
+import { registerServiceWorker } from './serviceWorkerNotifications';
+
 export async function subscribeToPushNotifications(): Promise<boolean> {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     console.warn('Push notifications not supported');
@@ -33,21 +35,42 @@ export async function subscribeToPushNotifications(): Promise<boolean> {
   }
 
   try {
-    // Wait for service worker to be ready
-    const registration = await navigator.serviceWorker.ready;
+    console.log('Starting push notification subscription...');
+
+    // Ensure service worker is registered before waiting for ready
+    const registrationInit = await registerServiceWorker();
+    if (!registrationInit) {
+      console.error('Service worker registration failed before push subscription');
+      return false;
+    }
+    
+    // Wait for service worker to be ready with a timeout
+    const registration = await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise<ServiceWorkerRegistration>((_, reject) => 
+        setTimeout(() => reject(new Error('Service worker timeout')), 10000)
+      )
+    ]);
+    
+    console.log('Service worker ready:', registration);
     
     // Check if already subscribed
     let subscription = await registration.pushManager.getSubscription();
     
     if (!subscription) {
+      console.log('No existing subscription, creating new one...');
       // Subscribe to push notifications
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
+      console.log('New subscription created:', subscription);
+    } else {
+      console.log('Using existing subscription:', subscription);
     }
 
     // Send subscription to server
+    console.log('Sending subscription to server...');
     const response = await fetch(`${PUSH_SERVER_URL}/subscribe`, {
       method: 'POST',
       body: JSON.stringify(subscription),
@@ -57,15 +80,18 @@ export async function subscribeToPushNotifications(): Promise<boolean> {
 
     if (response.ok) {
       console.log('✅ Subscribed to push notifications');
-      console.log('Subscription:', subscription);
+      const data = await response.json();
+      console.log('Server response:', data);
       return true;
     } else {
       console.error('Server response status:', response.status, response.statusText);
-      console.error('Failed to subscribe on server');
+      const errorText = await response.text();
+      console.error('Error details:', errorText);
       return false;
     }
   } catch (error) {
     console.error('Push subscription error:', error);
+    console.error('Error details:', error instanceof Error ? error.message : String(error));
     return false;
   }
 }
