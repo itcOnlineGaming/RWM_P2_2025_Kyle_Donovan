@@ -20,32 +20,69 @@ webpush.setVapidDetails(
 let subscriptions = [];
 
 app.post('/subscribe', (req, res) => {
+  console.log('📝 New subscription received');
   subscriptions.push(req.body);
-  res.status(201).json({});
+  console.log(`Total subscriptions: ${subscriptions.length}`);
+  res.status(201).json({ message: 'Subscribed successfully' });
 });
 
 app.post('/notify', async (req, res) => {
-  const payload = JSON.stringify({ title: 'Push Test', body: 'Hello from server!' });
+  const payload = JSON.stringify(req.body || { title: 'Push Test', body: 'Hello from server!' });
+  let successCount = 0;
+  let failCount = 0;
+  
   for (const sub of subscriptions) {
     try {
       await webpush.sendNotification(sub, payload);
+      successCount++;
     } catch (e) {
-      // Optionally remove invalid subscriptions
+      failCount++;
+      console.error('Failed to send to subscription:', e.message);
     }
   }
-  res.send('Notifications sent');
+  res.json({ 
+    message: 'Notifications sent',
+    success: successCount,
+    failed: failCount
+  });
 });
 
 app.get('/trigger', async (req, res) => {
-  const payload = JSON.stringify({ title: 'Manual Trigger', body: 'This notification was sent from the server!' });
+  console.log(`🔔 Manual trigger requested. Subscriptions: ${subscriptions.length}`);
+  
+  if (subscriptions.length === 0) {
+    return res.send('⚠️ No subscriptions found. Please subscribe first from the app.');
+  }
+  
+  const payload = JSON.stringify({ 
+    title: 'Manual Trigger', 
+    body: 'This notification was sent from the server!',
+    icon: '📅',
+    badge: '📅'
+  });
+  
+  let successCount = 0;
+  let failCount = 0;
+  
   for (const sub of subscriptions) {
     try {
       await webpush.sendNotification(sub, payload);
+      successCount++;
+      console.log('✅ Notification sent successfully');
     } catch (e) {
-      // Optionally remove invalid subscriptions
+      failCount++;
+      console.error('❌ Failed to send notification:', e.message);
     }
   }
-  res.send('Manual notification sent');
+  
+  res.send(`✅ Sent to ${successCount} subscribers. Failed: ${failCount}`);
+});
+
+app.get('/status', (req, res) => {
+  res.json({
+    subscriptions: subscriptions.length,
+    message: subscriptions.length === 0 ? 'No subscriptions yet' : `${subscriptions.length} active subscription(s)`
+  });
 });
 
 app.listen(3000, () => console.log('Push server running on port 3000'));

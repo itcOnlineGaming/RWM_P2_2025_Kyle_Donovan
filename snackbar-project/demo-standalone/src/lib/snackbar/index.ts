@@ -32,3 +32,11 @@ export {
 } from './calendarIntegration';
 
 export type { CalendarEvent } from './calendarIntegration';
+
+// Push notifications for background delivery
+export {
+  subscribeToPushNotifications,
+  isPushSubscribed,
+  triggerPushNotification,
+  schedulePushNotification
+} from './pushNotifications';

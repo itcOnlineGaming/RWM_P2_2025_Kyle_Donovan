@@ -573,6 +573,23 @@
   transform: translateX(4px);
 }
 
+.quick-action-btn.push-enabled {
+  background: linear-gradient(135deg, #4caf50, #45a049);
+  border-color: #4caf50;
+  color: white;
+  cursor: default;
+}
+
+.quick-action-btn:disabled {
+  opacity: 0.9;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.quick-action-btn.push-enabled:hover {
+  transform: none;
+}
+
 @media (max-width: 1024px) {
   .calendar-container {
     grid-template-columns: 1fr;

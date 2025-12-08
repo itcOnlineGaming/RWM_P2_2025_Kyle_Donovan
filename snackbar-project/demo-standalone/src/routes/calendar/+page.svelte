@@ -10,6 +10,11 @@
   import { 
     setupMobileNotifications 
   } from '$lib/snackbar/index';
+  import {
+    subscribeToPushNotifications,
+    isPushSubscribed,
+    triggerPushNotification
+  } from '$lib/snackbar/index';
   import { onMount } from 'svelte';
   import './calendar.css';
 
@@ -17,6 +22,9 @@
   const today = new Date();
   let currentMonth = today.getMonth();
   let currentYear = today.getFullYear();
+  
+  // Push notification state
+  let pushEnabled = false;
 
   // Modal state
   let showModal = false;
@@ -52,7 +60,29 @@
     if (permission === 'granted' && registration) {
       console.log('✅ Mobile notifications ready!');
     }
+    
+    // Check if push notifications are already enabled
+    pushEnabled = await isPushSubscribed();
+    if (pushEnabled) {
+      console.log('✅ Push notifications already subscribed');
+    }
   });
+  
+  // Enable push notifications
+  async function enablePushNotifications() {
+    const success = await subscribeToPushNotifications();
+    if (success) {
+      pushEnabled = true;
+      snackbar.success('Push notifications enabled! You\'ll receive reminders even when the app is closed.', {
+        duration: 5000,
+        position: 'top-center'
+      });
+    } else {
+      snackbar.error('Failed to enable push notifications', {
+        duration: 4000
+      });
+    }
+  }
 
   function generateCalendar(year, month) {
     const firstDay = new Date(year, month, 1);
@@ -172,12 +202,25 @@
     });
   }
 
-  function sendReminder(event) {
+  async function sendReminder(event) {
     // Use the calendar integration helper - includes vibration on mobile
     notifyEventReminder(event, 15, {
       showDesktopNotification: true,
       snackbarPosition: 'top-right'
     });
+    
+    // Also send push notification if enabled (works when app is closed!)
+    if (pushEnabled) {
+      await triggerPushNotification(
+        `📅 Reminder: ${event.title}`,
+        `Your event starts in 15 minutes`,
+        {
+          icon: '📅',
+          tag: `reminder-${event.date.getTime()}`,
+          requireInteraction: true
+        }
+      );
+    }
   }
 
   function deleteEvent(eventToDelete) {
@@ -368,6 +411,14 @@
           <button class="quick-action-btn" on:click={() => snackbar.warning('You have 3 meetings this week')}>
             <span>📈</span>
             Weekly View
+          </button>
+          <button 
+            class="quick-action-btn {pushEnabled ? 'push-enabled' : ''}" 
+            on:click={enablePushNotifications}
+            disabled={pushEnabled}
+          >
+            <span>{pushEnabled ? '✅' : '🔔'}</span>
+            {pushEnabled ? 'Push Enabled' : 'Enable Push'}
           </button>
         </div>
       </div>
