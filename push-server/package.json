@@ -3,6 +3,13 @@
   "version": "1.0.0",
   "main": "index.js",
   "type": "commonjs",
+  "scripts": {
+    "start": "node index.js",
+    "start:https": "node index-https.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "dependencies": {
     "express": "^4.18.2",
     "web-push": "^3.6.0",

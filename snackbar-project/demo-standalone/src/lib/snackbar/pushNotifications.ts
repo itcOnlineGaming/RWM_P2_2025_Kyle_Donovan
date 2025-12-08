@@ -2,8 +2,42 @@
  * Push Notifications - Background notifications via push server
  */
 
-const PUSH_SERVER_URL = 'http://localhost:3000';
+/**
+ * Automatically determine push server URL based on environment
+ * - Development: uses localhost
+ * - Production/Network: uses same host as the app
+ * - Can be overridden with VITE_PUSH_SERVER_URL environment variable
+ */
+function getPushServerUrl(): string {
+  // Check for environment variable override
+  if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_PUSH_SERVER_URL) {
+    return import.meta.env.VITE_PUSH_SERVER_URL;
+  }
+  
+  // In browser environment
+  if (typeof window !== 'undefined') {
+    const currentHost = window.location.hostname;
+    const protocol = window.location.protocol;
+    
+    // If we're on localhost, use localhost for push server
+    if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
+      return 'http://localhost:3000';
+    }
+    
+    // Otherwise, use the same host with port 3000
+    // This works when deployed on SETU server or any network
+    return `${protocol}//${currentHost}:3000`;
+  }
+  
+  // Fallback
+  return 'http://localhost:3000';
+}
+
+const PUSH_SERVER_URL = getPushServerUrl();
 const VAPID_PUBLIC_KEY = 'BB0mh7LqN9ykwQ6JehCD58ogN9Lphh3LVJ7QaFm6iUZJh5Hr_FfXt9ey4OOyU-BuJblIu2v2ycVShK7WSoy46vE';
+
+// Log the push server URL for debugging
+console.log('Push Server URL:', PUSH_SERVER_URL);
 
 /**
  * Convert VAPID key to Uint8Array for push subscription

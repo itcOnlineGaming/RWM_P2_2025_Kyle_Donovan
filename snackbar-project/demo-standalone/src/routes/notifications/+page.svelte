@@ -5,6 +5,7 @@
     subscribeToPushNotifications, 
     isPushSubscribed 
   } from '$lib/snackbar';
+  import { config } from '$lib/config';
 
   let notificationPermission = 'checking...';
   let pushEnabled = false;
@@ -68,7 +69,8 @@
   async function triggerServerNotification() {
     loading = true;
     try {
-      const response = await fetch('http://localhost:3000/notify', {
+      const pushServerUrl = config.getPushServerUrl();
+      const response = await fetch(`${pushServerUrl}/notify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });

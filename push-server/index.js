@@ -85,4 +85,27 @@ app.get('/status', (req, res) => {
   });
 });
 
-app.listen(3000, () => console.log('Push server running on port 3000'));
+const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0'; // Listen on all network interfaces
+
+app.listen(PORT, HOST, () => {
+  console.log(`Push server running on port ${PORT}`);
+  
+  // Get all network interfaces to show available IPs
+  const os = require('os');
+  const networkInterfaces = os.networkInterfaces();
+  
+  console.log('\nServer accessible at:');
+  console.log(`  - Local: http://localhost:${PORT}`);
+  
+  Object.keys(networkInterfaces).forEach(interfaceName => {
+    networkInterfaces[interfaceName].forEach(iface => {
+      // Skip internal and non-IPv4 addresses
+      if (iface.family === 'IPv4' && !iface.internal) {
+        console.log(`  - Network: http://${iface.address}:${PORT}`);
+      }
+    });
+  });
+  
+  console.log('\nUse the Network URL to access from other devices on the same network.');
+});

@@ -13,9 +13,9 @@ export default {
 			strict: true
 		}),
 		
-		// Team 4 deployment path - only used for production
+		// Base path for SETU server deployment
 		paths: {
-			base: process.env.NODE_ENV === 'production' ? '/Team_4' : ''
+			base: process.env.PUBLIC_BASE_PATH || ''
 		}
 	}
 };
